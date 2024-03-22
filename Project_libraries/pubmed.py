@@ -1,4 +1,14 @@
+__author__ = "Amaral LAN"
+__copyright__ = "Copyright 2024, Amaral LAN"
+__credits__ = ["Amaral LAN"]
+__version__ = "1.0"
+__maintainer__ = "Amaral LAN"
+__email__ = "amaral@northwestern.edu"
+__status__ = "Production"
+
+#########################################################################
 import requests
+import re
 
 import pandas as pd
 
@@ -13,7 +23,68 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from time import sleep
 
-from Project_libraries.my_stats import ( half_frame )
+from Project_libraries.my_stats import ( half_frame, place_commas )
+
+
+#########################################################################
+def get_articles_start_line( abstracts_files ):
+    """
+    This file takes a list of Posix Paths to data files and 
+    returns a list of integers with start line of the 
+    individual articles and a list of lines from the files.
+    
+    inputs:
+        abstracts_files -- list of Posic Paths
+    
+    returns:
+        articles_start -- list of int
+        data -- list of str
+    """
+    data = []
+    file_switches = []
+    for data_file in abstracts_files:
+        with open(data_file, 'r', encoding = 'utf-8') as f_abs:
+            data.extend( f_abs.readlines() )
+            data.extend( ['\n']*2 )
+            print(f"Finished reading {place_commas(len(data))} lines.")
+            file_switches.append( len(data) )
+
+    # Identify starting line of each article
+    #
+    pattern = '\d{1,4}[.] '
+
+    articles_start = []
+    k0 = 0
+    k = 0
+    while True:
+
+        # Account for restart of potential_index at new file
+        if k == file_switches[0]:
+            file_switches.pop(0)
+            k0 = len( articles_start )
+
+        # Start of record  
+        #
+        potential_match = re.match(pattern, data[k])
+        if potential_match:
+            potential_index = int( data[k][potential_match.start(): 
+                                           potential_match.end()-2] ) + k0
+
+
+            if potential_index - 1 == len(articles_start):
+#                 if not potential_index % 100: print(potential_index)
+                articles_start.append( k )
+
+        k += 1
+        if k == len(data):
+            break
+
+    print(f"\n----> There are {place_commas(len(articles_start))} articles listed in file.\n\n" )
+
+    # Need to add last line of file so all articles are checked later
+    articles_start.append( len(data) )
+    
+    return (articles_start, data)
 
 
 #########################################################################
@@ -637,7 +708,7 @@ def manual_assignment_of_publisher( journal ):
     elif journal in ['Clin Sci (Lond)', 'Nanomedicine (Lond)', 'Womens Health (Lond)']:
         publisher = 'Future Science Group'
                 
-    elif journal in ['Aging (Albany NY)']: 
+    elif journal in ['Aging (Albany NY)', 'Oncotarget', ]: 
         publisher = 'Impact Journals'
     
     elif journal in ['Nanotechnology']:
@@ -665,13 +736,17 @@ def manual_assignment_of_publisher( journal ):
         publisher = 'Oxford University Press'
 
     elif journal in ['Arch Dermatol Res', 'Biometals', 'Genetica', 'Infection', 
-                     'Inflammation', 'Lung', 'Nature', 'Stem Cell Res Ther']: 
+                     'Inflammation', 'Lung', 'Nature', 'Oncogene', 'Stem Cell Res Ther']: 
         publisher = 'Springer Nature'
 
+    elif journal in ['Cell Cycle']:
+        publisher = 'Taylor & Francis'
+        
     elif journal in ['Biomedica']: 
         publisher = 'University of Health Sciences'
 
-    elif journal in ['Cancer', 'Immunology', 'Proteomics', 'Transfusion']: 
+    elif journal in ['Cancer', 'Immunology', 'Proteomics', 'Psychooncology', 
+                     'Transfusion']: 
         publisher = 'Wiley'
 
     elif journal in ['Medicine (Baltimore)', 'Neurosurgery', 'Transplantation']:
