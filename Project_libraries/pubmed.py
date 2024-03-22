@@ -151,15 +151,24 @@ def search_for_journal_match( browser, journal, match_url ):
     browser.get(match_url)            
     soup = BeautifulSoup(browser.page_source, 'html.parser')
 
-    # Find number of pages
+    # Find number of items and pages
+    final_item = soup.find('h3', {'class': 'result_count left'})
+    if final_item is None:
+        return None
+    
     final_page = soup.find('h3', {'class': 'page'})
     if final_page is None:
+        final_page = 1
+    else:
+        final_page = int( final_page.text.split()[-1] )
+        
+    print(f"There are {final_page} pages of results.\n")
+    if final_page > 10:
+        print('Too many pages of results.\n')
         return None
 
-    final_page = int( final_page.text.split()[-1] )
-    print(f"There are {final_page} pages of results.\n")
-
     for page in range(final_page):
+        print(f"-----------{page}-----------")
         pane = soup.find('div', {'class': 'content'})
         results = list(pane.children)[9]
 
@@ -175,10 +184,10 @@ def search_for_journal_match( browser, journal, match_url ):
             if aux is None:
                 continue
 
-            # This is how many items are in the soup before the one I want
+            # This is how many items are in the soup before the one I want <- This may fail!!!
             title_abbrev = aux.next.next
             title_abbrev = title_abbrev.text
-
+            
             # Compare title to journal name
             if title_abbrev == journal:   
                 nlm_id = item.find('div', {'class': 'aux'}).text
@@ -192,12 +201,13 @@ def search_for_journal_match( browser, journal, match_url ):
 
         # If you reach here, the search in the page failed
         #
-        elem = browser.find_element(By.ID, 'pageno')
-        elem.send_keys(Keys.BACKSPACE + Keys.BACKSPACE + str(page+1) + Keys.ENTER)
-        sleep(4)
+        if final_page > 1 and (page + 2) <= final_page:
+            elem = browser.find_element(By.ID, 'pageno')
+            elem.send_keys(Keys.BACKSPACE + Keys.BACKSPACE + str(page + 2) + Keys.ENTER)
+            sleep(4)
 
-        browser.refresh() 
-        soup = BeautifulSoup(browser.page_source, 'html.parser')
+            browser.refresh() 
+            soup = BeautifulSoup(browser.page_source, 'html.parser')
         
     return None
 
@@ -378,7 +388,7 @@ def plot_time_series(ax, df, key, delta, label, color, band_color):
         my_factor = 3.5
 
     elif 'Case' == label[:4]:
-        ylabel = 'Papers'
+        ylabel = 'Publications'
         mean = df[key].rolling(delta, min_periods = 1, center = True).mean()
         sem = df[key].rolling(delta, min_periods = 1, center = True).sem()
         my_text = f"Topic: {label[5:].title()}"
@@ -386,7 +396,7 @@ def plot_time_series(ax, df, key, delta, label, color, band_color):
         my_factor = 3.5
         
     else:
-        ylabel = 'Papers'
+        ylabel = 'Publications'
         mean = df[key].rolling(delta, min_periods = 1, center = True).mean()
         sem = df[key].rolling(delta, min_periods = 1, center = True).sem()
         my_text = f"{label}"
@@ -409,6 +419,7 @@ def plot_time_series(ax, df, key, delta, label, color, band_color):
                      color = band_color, zorder = 1 )
     
     ax.set_xlim( df.Year.min(), df.Year.max()+1 )
+    ax.set_xticks(arange(df.Year.min(), df.Year.max()+1, 4))
     ax.set_ylim(0, ymax)
     
     # Guide lines
@@ -685,20 +696,7 @@ def manual_assignment_of_publisher( journal ):
     elif journal in ['J Immunol']:
         publisher = 'American Association of Immunologists'
         
-    elif journal in ['BMJ', 'Heart', 'Thorax']: 
-        publisher = 'British Medical Association'
-        
-    elif journal in ['Cell', 'Heliyon', 'Immunity', 'Structure']: 
-        publisher = 'Cell Press'
-    
-    elif journal in ['Development']: 
-        publisher = 'Company of Biologists'
-        
-    elif journal in ['Nihon Kokyuki Gakkai Zasshi']:    
-        publisher = 'Do Gakkai'
-        
-    elif journal in ['Biomaterials', 'Gene', 'Genomics', 'Injury', 'Lancet', 
-                     'Metabolism', 'Methods', 'Nanomedicine', 
+    elif journal in ['Gene', 'Lancet', 'Methods', 'Nanomedicine', 
                      'Talanta', 'Toxicology', 'Urology', 'Vaccine']: 
         publisher = 'Elsevier'
         
@@ -708,48 +706,28 @@ def manual_assignment_of_publisher( journal ):
     elif journal in ['Clin Sci (Lond)', 'Nanomedicine (Lond)', 'Womens Health (Lond)']:
         publisher = 'Future Science Group'
                 
-    elif journal in ['Aging (Albany NY)', 'Oncotarget', ]: 
+    elif journal in ['Aging (Albany NY)']: 
         publisher = 'Impact Journals'
-    
-    elif journal in ['Nanotechnology']:
-        publisher = 'IOP Publishing'
-                
-    elif journal in ['Neuroscience']:
-        publisher = 'Internation Brain Research Organization'
-    
+                    
     elif journal in ['Intern Med']:
         publisher = 'Japanese Society of Internal Medicine'
     
-    elif journal in ['Gerontology', 'Oncology (Williston Park)',
-                     'Pharmacology', 'Respiration']: 
+    elif journal in ['Oncology (Williston Park)']: 
         publisher = 'Karger'
         
     elif journal in ['Adv Wound Care (New Rochelle)']:
         publisher = 'Mary Ann Liebert'
 
-    elif journal in ['Antioxidants (Basel)', 'Appl Sci (Basel)', 'Biomolecules', 
-                     'Gels', 'Life (Basel)', 'Molecules', 'Network', 
-                     'Pharmaceutics', 'Pharmaceuticals (Basel)']:
+    elif journal in ['Biomolecules', 'Life (Basel)']:
         publisher = 'MDPI'             
         
-    elif journal in ['Bioinformatics', 'G3 (Bethesda)', 'Carcinogenesis']:
+    elif journal in ['G3 (Bethesda)']:
         publisher = 'Oxford University Press'
 
-    elif journal in ['Arch Dermatol Res', 'Biometals', 'Genetica', 'Infection', 
-                     'Inflammation', 'Lung', 'Nature', 'Oncogene', 'Stem Cell Res Ther']: 
-        publisher = 'Springer Nature'
-
-    elif journal in ['Cell Cycle']:
-        publisher = 'Taylor & Francis'
-        
-    elif journal in ['Biomedica']: 
-        publisher = 'University of Health Sciences'
-
-    elif journal in ['Cancer', 'Immunology', 'Proteomics', 'Psychooncology', 
-                     'Transfusion']: 
+    elif journal in ['Cancer']: 
         publisher = 'Wiley'
 
-    elif journal in ['Medicine (Baltimore)', 'Neurosurgery', 'Transplantation']:
+    elif journal in ['Medicine (Baltimore)']:
         publisher = 'Wolters Kluwer'
     
     return publisher
@@ -856,7 +834,8 @@ def assign_publisher( line ):
     elif 'American Veterinary Medical Ass' in line:
         publisher = 'American Veterinary Medical Ass'
 
-    elif 'AME Publishing Company' in line:
+    elif ( 'AME Publishing Company' in line or 
+           'Pioneer Bioscience' in line ):
         publisher = 'AME Publishing'
         
     elif 'Annual Reviews' in line:
@@ -901,21 +880,25 @@ def assign_publisher( line ):
     elif 'Cell Press' in line:
         publisher = 'Cell Press'
         
-    elif 'Chinese Anti-Cancer Association' in line:
+    elif 'Science China Press' in line:
+        publisher = 'Chinese Academy of Sciences'
+
+    elif 'Chinese Anti-Cancer Ass' in line:
         publisher = 'Chinese Anti-Cancer Association'
         
-    elif ( 'Chinese Medical Association' in line
-           or 'Zhongguo yi xue ke xue yuan' in line ):
+    elif ( 'Chinese Medical Ass' in line or 
+           'Zhongguo yi xue ke xue yuan' in line ):
         publisher = 'Chinese Medical Association'
           
-    elif 'Cold Spring Harbor Laboratory Press' in line or 'CSHL Press' in line:
+    elif ( 'Cold Spring Harbor Laboratory Press' in line or 
+           'CSHL Press' in line ):
         publisher = 'Cold Spring Harbor Laboratory Press'
         
     elif 'Company of Biologists' in line:
         publisher = 'Company of Biologists'
         
-    elif ( 'Croatian Academy Of Medical Sciences' in line
-           or 'Hrvatska akademija medicinskih znanosti' in line ):
+    elif ( 'Croatian Academy Of Medical Sciences' in line or
+           'Hrvatska akademija medicinskih znanosti' in line ):
         publisher = 'Croatian Academy Of Medical Sciences'
 
     elif ( 'CRC' in line 
@@ -926,6 +909,9 @@ def assign_publisher( line ):
         publisher = 'CRC Press'
 
 # D
+    elif 'Dō Gakkai' in line or 'do gakkai' in line.lower():
+        publisher = 'Do Gakkai'
+        
     elif ( 'De Gruyter' in line 
            or 'de Gruyter' in line
            or 'Berkeley Electronic Press' in line
@@ -982,6 +968,9 @@ def assign_publisher( line ):
         publisher = 'Hindawi'
     
 # I 
+    elif 'Impact Journals' in line:
+        publisher = 'Impact Journals'
+        
     elif 'IMR Press' in line:
         publisher = 'IMR Press'
         
@@ -1223,6 +1212,11 @@ def assign_publisher( line ):
            or 'Medknow Pub' in line ):
         publisher = 'Wolters Kluwer'
 
+# Z
+    elif ('Zhonghua yi xue hui' in line or 'zhonghua yixuehui' in line.lower()):
+        publisher = 'Zhonghua yi xue hui'
+
+        
     else:
         publisher = None
         
