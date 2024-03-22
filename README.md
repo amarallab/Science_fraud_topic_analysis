@@ -10,7 +10,7 @@ Our starting point is the retrieval bibliometric information on specific researc
 * Studies of skin wound healing
 
 For each of those research topics, we downloaded blibliometric information of the publications listed in PubMed.  Of particular interest, we obtain title, abstract, journal,
-and year of publication. This analysis is conducted using the notebooks titled `process_data.ipynb` included in the topic folder.  On of the steps in the analysis aims to determine
+and year of publication. This analysis is conducted using the notebook titled `process_data.ipynb` and the functions for manual correction developed for each topic.  On of the steps in the analysis aims to determine
 whether the article:
 
 * is a review, 
@@ -21,7 +21,7 @@ whether the article:
 
 The pre-processing step produces a file titled `articles_clean.json` that is available for further analysis.
 
-Because of the important role played by predatory publishers, the notebook titled `compile_publisher_info.ipynb` uses a search to the NLM catalogue and/or a manual determination 
+The notebook titled `compile_publisher_info.ipynb` uses a search to the NLM catalogue and/or a manual determination 
 to assign a publisher to a journal.
 
 Finally, the notebook `publication_patterns_by_topic.ipynb` conducts some simple analysis relating to the relative occurrence of certain characteristics (retracted, review, etc) 
