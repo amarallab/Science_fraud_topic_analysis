@@ -13,6 +13,7 @@ import re
 import pandas as pd
 
 from collections import Counter
+from colorama import Back, Fore, Style
 from bs4 import BeautifulSoup
 from datetime import datetime
 from numpy import arange, array, isnan, nan
@@ -247,9 +248,9 @@ def classify_articles( articles, label ):
         if article['comment'] and 'Received comment! ' == article['comment'][:18]:
             commented_articles.append(article)
 
-    print(f"There are {len(articles)} articles in the {label} set; "
+    print(f"There are {len(articles)} articles in the '{label}' set.\n"
           f"{len(no_abstract_articles)} have no abstract; \n"
-          f"{len(retracted_articles)} have been retracted; "
+          f"{len(retracted_articles)} have been retracted; \n"
           f"{len(erratum_articles)} have had errata published; and \n"
           f"{len(commented_articles)} have had comments written about them.\n\n")
 
@@ -280,7 +281,13 @@ def extract_publication_date( article ):
     if '-' in my_date:
         my_date = my_date.split('-')[0]
         
+    if ':' in my_date:
+        my_date = my_date.split(':')[0]
+        
     if my_date.strip().lower() in ['spring', 'summer', 'fall', 'autumn', 'winter']:
+        my_date = ''
+    
+    if my_date.strip().lower() in ['juni']:
         my_date = ''
     
     str_focus = ' '.join([str(article['year']), my_date.strip()]).strip()
@@ -289,7 +296,10 @@ def extract_publication_date( article ):
     if len(my_date) == 0:
         date_focus = datetime.strptime(str_focus, '%Y')
     elif len(my_date.split()) == 2:
-        date_focus = datetime.strptime(str_focus, '%Y %b %d')
+        if my_date.split()[0].isnumeric():
+            date_focus = datetime.strptime(str_focus, '%Y %m %d')
+        else:
+            date_focus = datetime.strptime(str_focus, '%Y %b %d')
     elif len(my_date.split()) == 1:
         date_focus = datetime.strptime(str_focus, '%Y %b')
     
@@ -439,9 +449,100 @@ def plot_time_series(ax, df, key, delta, label, color, band_color):
 
 
 #########################################################################
-def get_article_data(info):
+def handle_retractions( article, info ):
     """
+    """
+    # Set republished articles up for removal
+    #
+    if 'republished from' in info[4].lower():
+        return None, None
+
+    # Check for Retraction or Expression of concern info
+    #
+    if 'retraction in' in info[4].lower():
+        if article['retraction']:
+            article['retraction'] += ' ' + info.pop(4).strip(whitespace)
+        else:
+            article['retraction'] = info.pop(4).strip(whitespace)
+            flag = 'retracted'
     
+    if 'retraction of' in info[4].lower(): 
+        if article['retraction']:
+            article['retraction'] += info.pop(4).strip(whitespace)
+        else:
+            article['retraction'] = 'Retraction Notice: ' + info.pop(4).strip(whitespace)
+            flag = 'retraction notice'
+
+    if 'expression of concern in' in info[4].lower():
+        if article['retraction']:
+            article['retraction'] += ' ' + info.pop(4).strip(whitespace)
+        else:
+            article['retraction'] = info.pop(4).strip(whitespace)
+            flag = 'retracted'
+
+    # Check for Erratum info
+    #
+    if 'erratum' in info[4].lower():
+        article['erratum'] = info.pop(4).strip(whitespace)
+    else:
+        article['erratum'] = ''
+        
+    if 'this corrects the article' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+    
+    if 'an amendment to this paper' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+    
+    if 'a correction to this paper' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+    
+    if 'after publication of the original article' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+    
+    if 'the original version of this article' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+    
+    if 'corrected and republished in' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+    
+    if 'in the original publication of the article' in info[4].lower():
+        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
+        
+    # Check for Comment info
+    if 'original report in' in info[4].lower():
+        article['comment'] = info.pop(4).strip(whitespace) + ' '
+    else:
+        article['comment'] = ''
+        
+    # Look for comment in beginning of string, so you do not look for
+    # it in abstract -- It will not take care of all cases!!!
+    if 'comment ' in info[4][:150].lower():
+        article['comment'] += info.pop(4).strip(whitespace)
+        
+        if 'comment ' in info[4][:200].lower():
+            article['comment'] += ' ' + info.pop(4).strip(whitespace)
+    
+    elif article['comment'] == '':
+        article['comment'] = None 
+
+    return
+
+
+#########################################################################
+def get_article_data(i, info):
+    """
+    This function takes the index of the article being processed and 
+    a list of lines and returns a a flag and a dictionary. The flag
+    reports whether the article was retracted and the dictionary 
+    stores the article information.
+    
+    inputs:
+        i -- int
+        info -- list of str
+        
+    returns:
+        flag -- str
+        article -- dict
     """
     # Now get article metadata
     #
@@ -470,6 +571,7 @@ def get_article_data(info):
     article['date'] = date_string[4:]
 
     # Check for volume and pages:
+    #
     if ';' in info[0]:
         aux = info[0].split(';')[1].split(':')
         article['volume'] = aux[0]
@@ -479,22 +581,26 @@ def get_article_data(info):
         article['pages'] = None
     
     # Check for doi
+    #
     if len(aux) > 2:
         article['doi'] = aux[2].split()[0].strip('.')
     else:
         article['doi'] = None
 
     # Check for title
+    #
     article['title'] = info[1].strip(whitespace)
     if info[2][0] == '[':
         article['title'] += ' ' + info.pop(2)
         
-    # Check that is not publication announcing retraction
+    # Check that it is not publication announcing retraction
+    #
     if 'retraction' == article['title'][:10].lower():
         article['retraction'] = 'Retraction Notice: '
         flag = 'retraction notice'
         
     # check for Erratum or authors
+    #
     if 'Erratum' in info[2]:
         info.insert(2, 'Authors')
         article['authors'] = None
@@ -511,67 +617,34 @@ def get_article_data(info):
         info.insert(3, 'Author information:')
         article['affiliations'] = None
 
-    # Check for Erratum info
-    if 'erratum' in info[4].lower():
-        article['erratum'] = info.pop(4).strip(whitespace)
-    else:
-        article['erratum'] = None
-        
-    if 'This corrects the article' in info[4]:
-        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
-    elif 'An amendment to this paper' in info[4]:
-        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
-    elif 'A Correction to this paper' in info[4]:
-        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
-    elif 'After publication of the original article' in info[4]:
-        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
-    elif 'The original version of this article' in info[4]:
-        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
-    elif 'In the original publication of the article' in info[4]:
-        article['erratum'] += ' ' + info.pop(4).strip(whitespace)
-        
-    # Check for Comment info
-    if 'Original report in' in info[4]:
-        article['comment'] = info.pop(4).strip(whitespace) + ' '
-    else:
-        article['comment'] = ''
-        
-    # Look for comment in beginning of string, so you do not look for
-    # it in abstract -- It will not take care of all cases!!!
-    if 'comment ' in info[4][:150].lower():
-        article['comment'] += info.pop(4).strip(whitespace)
-        
-        if 'comment ' in info[4][:200].lower():
-            article['comment'] += ' ' + info.pop(4).strip(whitespace)
-    elif article['comment'] == '':
-        article['comment'] = None
-
-    # Check for Retraction or Expression of concern info
-    if 'Expression of concern in' in info[4]:
-        if article['retraction']:
-            article['retraction'] += ' ' + info.pop(4).strip(whitespace)
-        else:
-            article['retraction'] = info.pop(4).strip(whitespace)
-            flag = 'retracted'
-        
-    if 'Retraction in' in info[4]:
-        if article['retraction']:
-            article['retraction'] += ' ' + info.pop(4).strip(whitespace)
-        else:
-            article['retraction'] = info.pop(4).strip(whitespace)
-            flag = 'retracted'
+    # Check for retractions, errata, and comments
+    #
+    cases_to_check = [ 'retraction in', 'retraction of', 'expression of concern in',
+                       'erratum', 'this corrects the article', 'comment ',
+                       'an amendment to this paper', 'a correction to this paper', 
+                       'corrected and republished in', 
+                       'after publication of the original article',
+                       'the original version of this article',
+                       'in the original publication of the article',
+                       'original report in',
+                       'republished from' ]
     
-    if 'Retraction of' in info[4]: 
-        if article['retraction']:
-            article['retraction'] += info.pop(4).strip(whitespace)
-        else:
-            article['retraction'] = 'Retraction Notice: ' + info.pop(4).strip(whitespace)
-            flag = 'retraction notice'
-
+    found_cases = []
+    for k_line in range(4, len(info)):
+        for case in cases_to_check:
+            if case in info[k_line].lower():
+                found_cases.append( case )
+                break
+            
+    for case in found_cases:
+        handle_retractions( article, info )
+        
+    for key in ['retraction', 'erratum', 'comment']:
+        if key not in article.keys() or not article[key]:
+            article[key] = None
+                       
     # Check for abstract
-    if 'Republished from' in info[4]:
-        return None, None
-    
+    #
     article['abstract'] = ''
     if 'Update of' in info[4]:
         article['abstract'] += info.pop(4).strip(whitespace) + ' '
@@ -584,6 +657,11 @@ def get_article_data(info):
         info.insert(4, 'Abstract:')
         article['abstract'] += ''
         
+    if 'Publisher: ' == info[5][:11]:
+        article['abstract'] += ' ' + info.pop(5).strip(whitespace)
+        if 'Publisher: ' == info[5][:11]:
+            article['abstract'] += ' ' + info.pop(5).strip(whitespace)
+        
     if 'Plain Language Summary:' in info[5]:
         article['abstract'] += ' ' + info.pop(5).strip(whitespace)
         if 'Summary for patients'  in info[5]:
@@ -595,77 +673,51 @@ def get_article_data(info):
             article['abstract'] += ' ' + info.pop(5).strip(whitespace)
         
     # Check for copyright
-    if ( '©' in info[5] or 'Copyright' in info[5]  
-         or 'All rights reserved' in info[5] 
-         or 'Published by' in info[5] 
-         or 'Verlag KG' in info[5] 
-         or 'Wiley-Liss, Inc.' in info[5] 
-         or 'John Wiley & Sons' in info[5] 
-         or 'Wiley Periodicals, Inc' in info[5]
-         or 'wileyonlinelibrary.com/journal/jgc4' in info[5]
-         or 'Thieme' in info[5] 
-         or 'Thieme Medical Publishers' in info[5] 
-         or '(Cancer Epidemiol Biomarkers Prev' in info[5]
-         or 'American Cancer Society' in info[5] 
-         or 'Massachusetts Medical Society' in info[5]
-         or 'BMJ Publishing Group Ltd' in info[5]
-         or 'Celsius' in info[5]
-         or 'Karger AG' in info[5] 
-         or 'APA' in info[5] 
-         or 'RSNA' in info[5]
-         or 'AACR' in info[5] 
-         or 'Multimed Inc' in info[5]
-         or 'in the public domain' in info[5]
-         or 'Creative Commons Attribution' in info[5]
-         or 'Radiological Society of North America, Inc' in info[5]
-         or 'American Institute of Chemical Engineers Biotechnol' in info[5] 
-         or 'American Academy of Family Physicians'  in info[5] ):
-        article['copyright'] = info[5].strip(punctuation + whitespace)
-        article['other_ids'] = info[6]
-        m = 6
-    else:
-        article['copyright'] = None
-        article['other_ids'] = info[5]
-        m = 5
-        
-    # Check for error due to abstract in foreign language
-    if article['other_ids'][:10] == 'Publisher:' or len(article['other_ids']) > 300:
-        if article['abstract']:
-            article['abstract'] += ' ' + article['other_ids']
-        else:
-            article['abstract'] = article['other_ids']
+    #
+    copyright_cases = [ '©', '(c)', 'Copyright', 'All rights', 
+                        'Published by', 'Published on behalf', 'Published under', ]
+#                     'AG', 'A.G.', 'BV', 'B.V.', 'GmbH', 'Inc', 'LLC', 'Ltd', 'S.A.U.',
+    found_cases = []
+    for k_line in range(5, len(info)):
+        for case in copyright_cases:
+            if case in info[k_line]:
+                found_cases.append( k_line )
+#                 print('--', info[k_line])                
+                break
             
-        if ( '©' in info[m+1] or 'Copyright' in info[m+1]  
-             or 'All rights reserved' in info[m+1] 
-             or 'Published by' in info[m+1] 
-             or 'Verlag KG' in info[m+1] 
-             or 'Wiley-Liss, Inc.' in info[m+1] 
-             or 'John Wiley & Sons' in info[m+1] 
-             or 'Wiley Periodicals, Inc' in info[m+1]
-             or 'wileyonlinelibrary.com/journal/jgc4' in info[m+1]
-             or 'Thieme' in info[m+1]
-             or 'Thieme Medical Publishers' in info[m+1]
-             or '(Cancer Epidemiol Biomarkers Prev' in info[m+1]
-             or 'American Cancer Society' in info[m+1]
-             or 'Massachusetts Medical Society' in info[m+1]
-             or 'BMJ Publishing Group Ltd' in info[m+1]
-             or 'Celsius' in info[m+1]
-             or 'Karger AG' in info[m+1] 
-             or 'APA' in info[m+1]
-             or 'RSNA' in info[m+1]
-             or 'AACR' in info[m+1]
-             or 'Multimed Inc' in info[m+1]
-             or 'in the public domain' in info[m+1]
-             or 'Creative Commons Attribution License' in info[m+1]
-             or 'Radiological Society of North America, Inc' in info[m+1]
-             or 'American Institute of Chemical Engineers Biotechnol' in info[m+1] 
-             or 'American Academy of Family Physicians'  in info[m+1] ):
-            article['copyright'] = info[m+1].strip(punctuation + whitespace)
-            article['other_ids'] = info[m+2]
-        else:
-            article['copyright'] = None
-            article['other_ids'] = info[m+1]
-
+    if len(found_cases) > 1:
+        print(Fore.RED, Style.BRIGHT, f"{i} COPYRIGHT SURPRISE!!!", Style.RESET_ALL)
+        for k_line in found_cases:
+            print(k_line, '--', info[k_line])
+        
+    if len(found_cases) == 0:
+        article['copyright'] = None
+    else:
+        article['copyright'] = info[found_cases[0]]
+    
+    # Check for other ids
+    #
+    id_cases = ['DOI', 'PMC', 'PMI' ]    
+    found_cases = []
+    for k_line in range(5, len(info)):
+        for case in id_cases:
+            if case == info[k_line][:3]:
+                found_cases.append( k_line )
+#                 print('++', info[k_line])
+                break
+    
+    if len(found_cases) > 1:
+        print(Fore.RED, Style.BRIGHT, f"{i} ID SURPRISE!!!", Style.RESET_ALL)
+        for k_line in found_cases:
+            print(k_line, '--', info[k_line])
+                
+    if len(found_cases) == 0:
+        article['other_ids'] = None
+    else:
+        article['other_ids'] = info[found_cases[0]]
+    
+    # Clean up empty abstracts
+    #
     if article['abstract'] == '':
         article['abstract'] = None
     
@@ -696,7 +748,7 @@ def manual_assignment_of_publisher( journal ):
     elif journal in ['J Immunol']:
         publisher = 'American Association of Immunologists'
         
-    elif journal in ['Gene', 'Lancet', 'Methods', 'Nanomedicine', 
+    elif journal in ['Lancet', 'Methods', 'Nanomedicine', 
                      'Talanta', 'Toxicology', 'Urology', 'Vaccine']: 
         publisher = 'Elsevier'
         

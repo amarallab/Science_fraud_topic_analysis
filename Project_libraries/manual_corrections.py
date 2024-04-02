@@ -267,6 +267,78 @@ def chest_imaging( articles ):
 
 
 #########################################################################
+def deep_learning( articles ):
+    """
+    Manual corrections for deep learning tumor articles.
+    """
+    i = 117
+    articles[i]['abstract'] = '5 TECHNICAL EFFICACY: Stage 1 J. Magn. Reson. Imaging 2020;52:1237-1238.'
+    articles[i]['copyright'] = '© 2020 International Society for Magnetic Resonance in Medicine.'
+    articles[i]['other_ids'] = 'DOI: 10.1002/jmri.27131 PMID: 32154967 [Indexed for MEDLINE]'
+
+    i = 417
+    articles[i]['abstract'] = 'Dataset use reported in doi: 10.1038/s41591-018-0156-x.\nCurrently, approximately 150 different brain tumour types are defined by the WHO. Recent endeavours to exploit machine learning and deep learning methods for supporting more precise diagnostics based on the histological tumour appearance have been hampered by the relative paucity of accessible digital histopathological datasets. While freely available datasets are relatively common in many medical specialties such as radiology and genomic medicine, there is still an unmet need regarding histopathological data. Thus, we digitized a significant portion of a large dedicated brain tumour bank based at the Division of Neuropathology and Neurochemistry of the Medical University of Vienna, covering brain tumour cases from 1995-2019. A total of 3,115 slides of 126 brain tumour types (including 47 control tissue slides) have been scanned. Additionally, complementary clinical annotations have been collected for each case. In the present manuscript, we thoroughly discuss this unique dataset and make it publicly available for potential use cases in machine learning and digital image analysis, teaching and as a reference for external validation.'
+    articles[i]['copyright'] = '© 2022. The Author(s).'
+    articles[i]['other_ids'] = 'DOI: 10.1038/s41597-022-01157-0 PMCID: PMC8847577 PMID: 35169150 [Indexed for MEDLINE]'
+    
+    i = 1134
+    articles[i]['comment'] = articles[i]['authors']
+    articles[i]['authors'] = '[No authors listed]'
+    articles[i]['abstract'] = 'Algorithms matching the performance of expert pathologists in prostate cancer diagnosis were designed.'
+    articles[i]['copyright'] = '©2020 American Association for Cancer Research.'
+    articles[i]['other_ids'] = 'DOI: 10.1158/2159-8290.CD-RW2020-012 PMID: 31953243 [Indexed for MEDLINE]'
+
+    i = 2280
+    articles[i]['comment'] = 'Comment in Neuro Oncol. 2020 Mar 5;22(3):311-312.'
+    articles[i]['abstract'] = 'BACKGROUND: Isocitrate dehydrogenase (IDH) mutation status has emerged as an important prognostic marker in gliomas. Currently, reliable IDH mutation determination requires invasive surgical procedures. The purpose of this study was to develop a highly accurate, MRI-based, voxelwise deep-learning IDH classification network using T2-weighted (T2w) MR images and compare its performance to a multicontrast network.\nMETHODS: Multiparametric brain MRI data and corresponding genomic information were obtained for 214 subjects (94 IDH-mutated, 120 IDH wild-type) from The Cancer Imaging Archive and The Cancer Genome Atlas. Two separate networks were developed, including a T2w image-only network (T2-net) and a multicontrast (T2w, fluid attenuated inversion recovery, and T1 postcontrast) network (TS-net) to perform IDH classification and simultaneous single label tumor segmentation. The networks were trained using 3D Dense-UNets. Three-fold cross-validation was performed to generalize the networks performance. Receiver operating characteristic analysis was also performed. Dice scores were computed to determine tumor segmentation accuracy.\nRESULTS: T2-net demonstrated a mean cross-validation accuracy of 97.14% ± 0.04 in predicting IDH mutation status, with a sensitivity of 0.97 ± 0.03, specificity of 0.98 ± 0.01, and an area under the curve (AUC) of 0.98 ± 0.01. TS-net achieved a mean cross-validation accuracy of 97.12% ± 0.09, with a sensitivity of 0.98 ± 0.02, specificity of 0.97 ± 0.001, and an AUC of 0.99 ± 0.01. The mean whole tumor segmentation Dice scores were 0.85 ± 0.009 for T2-net and 0.89 ± 0.006 for TS-net.\nCONCLUSION: We demonstrate high IDH classification accuracy using only T2-weighted MR images. This represents an important milestone toward clinical translation.'
+    articles[i]['copyright'] = '© The Author(s) 2019. Published by Oxford University Press on behalf of the Society for Neuro-Oncology. All rights reserved. For permissions, please e-mail: journals.permissions@oup.com.'
+    articles[i]['other_ids'] = 'DOI: 10.1093/neuonc/noz199 PMCID: PMC7442388 PMID: 31637430 [Indexed for MEDLINE]'
+     
+    i = 3711
+    articles[i]['other_ids'] = 'DOI: 10.1631/jzus.B2300363 PMCID: PMC10758209 PMID: 38163668 [Indexed for MEDLINE]'
+
+    i = 4727
+    articles[i]['copyright'] = '(2018) COPYRIGHT Society of Photo-Optical Instrumentation Engineers (SPIE).'
+    articles[i]['other_ids'] = 'DOI: 10.1117/1.JBO.23.6.066002 PMID: 29900705 [Indexed for MEDLINE]'
+
+    i = 4953
+    articles[i]['copyright'] = '(2017) COPYRIGHT Society of Photo-Optical Instrumentation Engineers (SPIE).'
+    articles[i]['other_ids'] = 'DOI: 10.1117/1.JBO.22.10.106017 PMCID: PMC5661703 PMID: 29086544 [Indexed for MEDLINE]'
+
+    i = 5244
+    articles[i]['copyright'] = '© 2023 The Authors. Veterinary Dermatology published by John Wiley & Sons Ltd on behalf of ESVD and ACVD.'
+    articles[i]['other_ids'] = 'DOI: 10.1111/vde.13221 PMID: 38057947 [Indexed for MEDLINE]'
+    
+    
+    i = 6093
+    articles[i]['copyright'] = None
+    articles[i]['other_ids'] = 'DOI: 10.11817/j.issn.1672-7347.2021.200999 PMCID: PMC10930230 PMID: 34911846 [Indexed for MEDLINE]'
+    
+    i = 6490
+    articles[i]['copyright'] = '© 2023. The Author(s).'
+    articles[i]['other_ids'] = 'DOI: 10.1186/s12911-023-02404-z PMCID: PMC10759705 PMID: 38166852 [Indexed for MEDLINE]'
+    
+    i = 6495
+    articles[i]['copyright'] = None
+    articles[i]['other_ids'] = 'DOI: 10.11817/j.issn.1672-7347.2022.210645 PMCID: PMC10950116 PMID: 36097766 [Indexed for MEDLINE]'
+
+    i = 7756
+    articles[i]['copyright'] = None
+    articles[i]['other_ids'] = 'DOI: 10.11817/j.issn.1672-7347.2022.220101 PMCID: PMC10950118 PMID: 36097773 [Indexed for MEDLINE]'
+
+    i = 9188
+    articles[i]['abstract'] = articles[i]['other_ids'] + '\nAutomatic segmentation of vestibular schwannomas (VS) from magnetic resonance imaging (MRI) could significantly improve clinical workflow and assist patient management. We have previously developed a novel artificial intelligence framework based on a 2.5D convolutional neural network achieving excellent results equivalent to those achieved by an independent human annotator. Here, we provide the first publicly-available annotated imaging dataset of VS by releasing the data and annotations used in our prior work. This collection contains a labelled dataset of 484 MR images collected on 242 consecutive patients with a VS undergoing Gamma Knife Stereotactic Radiosurgery at a single institution. Data includes all segmentations and contours used in treatment planning and details of the administered dose. Implementation of our automated segmentation algorithm uses MONAI, a freely-available open-source framework for deep learning in healthcare imaging. These data will facilitate the development and validation of automated segmentation frameworks for VS and may also be used to develop other multi-modal algorithmic models.'
+    articles[i]['copyright'] = '© 2021. The Author(s).'
+    articles[i]['other_ids'] = 'DOI: 10.1038/s41597-021-01064-w PMCID: PMC8553833 PMID: 34711849 [Indexed for MEDLINE]'
+        
+    i = 9523
+    articles[i]['abstract'] = articles[i]['other_ids']
+    articles[i]['other_ids'] = 'DOI: 10.3390/cancers15082237 PMCID: PMC10136532 PMID: 37190334'
+    
+    return
+    
+    
+#########################################################################
 def green_synthesis( articles ):
     """
     Manual corrections for green synthesis of silver nanoparticles articles.
@@ -278,6 +350,60 @@ def green_synthesis( articles ):
     return
 
 
+#########################################################################
+def rnai_cancer( articles ):
+    """
+    Manual corrections for skind wound healing articles.
+    """
+    i = 105
+    articles[i]['other_ids'] = 'DOI: 10.1038/sj.gt.3302694 PMID: 16341059 [Indexed for MEDLINE]'
+
+    i = 136
+    articles[i]['other_ids'] = 'DOI: 10.3779/j.issn.1009-3419.2013.02.08 PMCID: PMC6000388 PMID: 23425903 [Indexed for MEDLINE]'
+
+    i = 2106
+    articles[i]['other_ids'] = 'DOI: 10.1111/j.1349-7006.2006.00174.x PMID: 16630124 [Indexed for MEDLINE]'
+
+    i = 3477
+    articles[i]['other_ids'] = 'DOI: 10.1038/sj.onc.1209153 PMID: 16205630 [Indexed for MEDLINE]'
+    
+    i = 3671
+    articles[i]['copyright'] = articles[i]['other_ids']   
+    articles[i]['other_ids'] = 'DOI: 10.1002/jmv.20466 PMID: 16173017 [Indexed for MEDLINE]'
+    
+    i = 4311
+    articles[i]['copyright'] = articles[i]['other_ids']   
+    articles[i]['other_ids'] = 'DOI: 10.1016/j.canlet.2009.04.014 PMID: 19457608 [Indexed for MEDLINE]'
+    
+    i = 4742
+    articles[i]['other_ids'] = 'DOI: 10.1038/sj.onc.1208852 PMID: 16170380 [Indexed for MEDLINE]'
+     
+    i = 5243
+    articles[i]['comment'] = articles[i]['other_ids']  
+    articles[i]['abstract'] = '1. RNA interference (RNAi) is a robust method of post-transcriptional silencing of genes using double-stranded RNA (dsRNA) with sequence homology driven specificity. The dsRNA can be between 21 and 23 nucleotides long: this is converted to small interfering RNA (siRNA), which then mediates gene silencing by degradation/blocking of translation of the target mRNA. 2. RNA interference provides a simple, fast and cost-effective alternative to existing gene targeting approaches both in vitro and in vivo. The discovery of siRNAs that cause RNAi in mammalian cells opened the door to the therapeutic use of siRNAs. Highly intense research efforts are now aimed at developing siRNAs for therapeutic purposes. 3. Recent advances in the design and delivery of targeting molecules now allow efficient and highly specific gene silencing in mammalian systems. Synthetic siRNA libraries targeting thousands of mammalian genes are publicly available for high-throughput genetic screens for target discovery and validation. Recent studies have demonstrated the clinical potential of aptly designed siRNAs in various types of viral infections, cancer and renal and neurodegenerative disorders. 4. The present review provides insight into the novel therapeutic strategies of siRNA technology, which is the latest development in nucleic acid-based tools for knocking down gene expression, and its potential for silencing genes associated with various human diseases.'
+    articles[i]['other_ids'] = 'DOI: 10.1111/j.1440-1681.2006.04399.x PMID: 16700886 [Indexed for MEDLINE]'
+    
+    i = 5255
+    articles[i]['abstract'] = articles[i]['other_ids']   
+    articles[i]['other_ids'] = 'DOI: 10.1186/gb-2004-5-9-342 PMCID: PMC522865 PMID: 15345042 [Indexed for MEDLINE]'
+    
+    i = 5304
+    articles[i]['copyright'] = articles[i]['other_ids']   
+    articles[i]['other_ids'] = 'DOI: 10.1073/pnas.1702370114 PMCID: PMC5692527 PMID: 29078269 [Indexed for MEDLINE]'
+    
+    i = 6233
+    articles[i]['other_ids'] = 'DOI: 10.1177/2472555219883621 PMCID: PMC7036479 PMID: 31658850 [Indexed for MEDLINE]'
+    
+    i = 6262
+    articles[i]['copyright'] = articles[i]['other_ids']   
+    articles[i]['other_ids'] = 'DOI: 10.1089/1043034041648462 PMID: 15319038 [Indexed for MEDLINE]'
+    
+    i = 6287
+    articles[i]['copyright'] = articles[i]['other_ids']   
+    articles[i]['other_ids'] = 'DOI: 10.1073/pnas.1711310114 PMCID: PMC5676921 PMID: 29078358 [Indexed for MEDLINE]'
+    
+    return
+    
 #########################################################################
 def wound_healing( articles ):
     """
