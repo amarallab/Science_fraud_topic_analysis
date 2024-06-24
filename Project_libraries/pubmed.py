@@ -134,7 +134,7 @@ def get_articles_by_publisher( articles, publisher ):
 
 
 #########################################################################
-def search_for_journal_match( browser, journal, match_url ):
+def search_for_journal_match( browser, journal, match_url, n_max ):
     """
     This function takes a soup object that returned a list of 
     journals instead of info on a specific journal and tries to 
@@ -144,6 +144,7 @@ def search_for_journal_match( browser, journal, match_url ):
         browser -- selenium webdriver object
         journal -- str 
         match_url -- str with url of NLM page
+        n_max -- int with maximum number of results to be considered 
         
     returns:
         table -- soup item 
@@ -155,7 +156,7 @@ def search_for_journal_match( browser, journal, match_url ):
     # Find number of items and pages
     final_item = soup.find('h3', {'class': 'result_count left'})
     if final_item is None:
-        return None
+        return 'No results'
     
     final_page = soup.find('h3', {'class': 'page'})
     if final_page is None:
@@ -164,12 +165,12 @@ def search_for_journal_match( browser, journal, match_url ):
         final_page = int( final_page.text.split()[-1] )
         
     print(f"There are {final_page} pages of results.\n")
-    if final_page > 10:
+    if final_page > n_max:
         print('Too many pages of results.\n')
-        return None
+        return final_page
 
     for page in range(final_page):
-        print(f"-----------{page}-----------")
+        print(f"-----------{page+1}-----------")
         pane = soup.find('div', {'class': 'content'})
         results = list(pane.children)[9]
 
@@ -382,6 +383,100 @@ def get_time_series(df, year0, year1):
         n_papers.append( len( df[df.year == i] ) )
 
     return array(n_papers)    
+
+
+#########################################################################
+def plot_for_problems( ax, df, color1, color2, band_color1, band_color2, x_label, y_label, 
+                       y_max, win):
+    """
+    
+    """
+    retract_set = 100*df['NoRev Retracted_ratio'].rolling(win, min_periods = 1, center = True).mean()
+    sem_retract = 100*df['NoRev Retracted_ratio'].rolling(win, min_periods = 1, center = True).sem()
+    
+    errata_set = 100*df['NoRev Errata_ratio'].rolling(win, min_periods = 1, center = True).mean()
+    sem_errata = 100*df['NoRev Errata_ratio'].rolling(win, min_periods = 1, center = True).sem()
+    
+    # y_max = max( retract_set.iloc[retract_set.idxmax()], 
+    #              errata_set.iloc[errata_set.idxmax()] ) 
+    print(y_max)
+    my_fontsize = 18
+    my_factor = 3.1
+        
+    half_frame(ax, x_label, y_label, font_size = 15)    
+    ax.plot(df.Year, retract_set, color = color1, lw = 2, alpha = 0.6, zorder = 10)
+    ax.plot(df.Year, errata_set, color = color2, lw = 2, alpha = 0.6, zorder = 9)
+
+    ax.fill_between( df.Year,
+                     retract_set - 1.0 * sem_retract,
+                     retract_set + 1.0 * sem_retract,
+                     color = band_color1, alpha = 0.6, zorder = 5 )
+
+    ax.fill_between( df.Year,
+                     errata_set - 1.0 * sem_errata,
+                     errata_set + 1.0 * sem_errata,
+                     color = band_color2, alpha = 0.6, zorder = 1 )
+
+    ax.set_xlim( 2002, 2023 )
+    ax.set_xticks( range(2002, 2023, 4) )
+    ax.set_ylim(0, y_max)
+    
+    # Guide lines
+    ax.set_yticks(arange(0, y_max+0.1, y_max/4))
+    ax.hlines( arange(0, y_max+0.1, y_max/4), 2002, 2023, '0.2',
+               zorder = -10 )
+    
+    return
+
+
+#########################################################################
+def plot_for_publications(ax, df, my_text, band_color, x_label ):
+    """
+    
+    """
+    full_set = df['Full Set Papers']
+    no_rev_set = df['No Review Papers']
+    
+    y_max = full_set.iloc[full_set.idxmax()]
+    print(y_max)
+    my_fontsize = 18
+    my_factor = 3.1
+        
+    if y_max < 600:
+        y_max = 600
+    elif y_max < 1200:
+        y_max = 1200
+    elif y_max < 5000:
+        y_max = 5000
+    elif y_max < 6000:
+        y_max = 6000
+    elif y_max < 8000:
+        y_max = 8000
+    elif y_max < 10000:
+        y_max = 10000
+        
+    half_frame(ax, x_label, 'Publications', font_size = 15)    
+    ax.plot(df.Year, full_set, 'b--', lw = 2)
+    ax.plot(df.Year, no_rev_set, color = 'k', lw = 2)
+    
+    ax.fill_between( df.Year, no_rev_set, full_set,
+                     color = band_color, zorder = 1 )
+
+    ax.set_xlim( 2002, 2023 )
+    ax.set_xticks( range(2002, 2023, 4) )
+    ax.set_ylim(0, y_max)
+   
+    # Guide lines
+    ax.set_yticks(arange(0, y_max+0.1, y_max/4))
+    ax.set_yticklabels([place_commas(int(x)) for x in arange(0, y_max+0.1, y_max/4)])
+    ax.hlines( range(0, y_max+1, int(y_max/4)), 2002, 2023, '0.2',
+               zorder = -10 )
+    
+    # Text
+    ax.text( 2003, my_factor*int(y_max/4), my_text, fontsize = my_fontsize, 
+             zorder = 2 )
+    
+    return
 
 
 #########################################################################
@@ -760,9 +855,18 @@ def manual_assignment_of_publisher( journal ):
                 
     elif journal in ['Aging (Albany NY)']: 
         publisher = 'Impact Journals'
+        
+    elif journal in ['Med Sci Monit']: 
+        publisher = 'International Scientific Information'
+        
+    elif journal in ['J Cancer', 'Int J Biol Sci']:
+        publisher = 'Ivyspring'
                     
     elif journal in ['Intern Med']:
         publisher = 'Japanese Society of Internal Medicine'
+    
+    elif journal in ['J Vis Exp']:
+        publisher = 'JoVE'
     
     elif journal in ['Oncology (Williston Park)']: 
         publisher = 'Karger'
@@ -776,6 +880,12 @@ def manual_assignment_of_publisher( journal ):
     elif journal in ['G3 (Bethesda)']:
         publisher = 'Oxford University Press'
 
+    elif journal in ['Peer J']:
+        publisher = 'Peer J'
+
+    elif journal in ['Hum Cell']:
+        publisher = 'Springer Nature'
+        
     elif journal in ['Cancer']: 
         publisher = 'Wiley'
 
