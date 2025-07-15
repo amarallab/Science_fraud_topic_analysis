@@ -2,12 +2,7 @@
 
 This project aims to investigate large-scale the patterns of potential scientific fraud at the level of single topics.
 
-Our starting point is the retrieval bibliometric information on specific research topics from `PubMed`.  Our initial analysis includes the following 4 topics:
-
-* Studies of *Brac2* gene (which is implicated in breast cancer)
-* Studies of penumonia using chest imaging
-* Studies green synthesis of silver nanoparticles
-* Studies of skin wound healing
+Our starting point is the retrieval bibliometric information on specific research topics from `PubMed`. Each topic is associated with a data folder in the repo.  
 
 For each of those research topics, we downloaded blibliometric information of the publications listed in PubMed.  Of particular interest, we obtain title, abstract, journal,
 and year of publication. This analysis is conducted using the notebook titled `process_data.ipynb` and the functions for manual correction developed for each topic.  On of the steps in the analysis aims to determine
@@ -29,4 +24,4 @@ for all articles retrieved in a topic, for all articles published in a given jou
 
 The results of the analysis are saved a file named `time_series.png` (for all publications) or in folders named *Journals* and *Publishers* within each of the topic folders.
 
-I have attempted to summarize results for some of those topics is files named `Report_{topic name}.ipynb`.
+The results for some of those topics iare summarized in files named `Report_{topic name}.ipynb`.
